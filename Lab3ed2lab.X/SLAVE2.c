@@ -1,8 +1,8 @@
-/* 
- * File:   prelab3.c
- * Author: Luis Pedro Gonzalez 21513
+/*
+ * File:   prelabed2slave.c
+ * Author: lpgp3
  *
- * Created on 30 de julio de 2023, 04:09 PM
+ * Created on 30 de julio de 2023, 04:50 PM
  */
 
 // CONFIG1
@@ -29,80 +29,71 @@
 //*****************************************************************************
 #include <xc.h>
 #include <stdint.h>
-#include <stdio.h>
 #include "SPI.h"
-#include "LCD.h"
-
-
-char pot1;
-char pot2;
-
-char buffer[4]; // Variable para almacenar la cadena de caracteres del valor del ADC
+#include "ADC.h"
+#include <stdio.h>
+#include <pic16f887.h>
+#include<pic.h>
 
 //*****************************************************************************
 // Definici?n de variables
 //*****************************************************************************
 #define _XTAL_FREQ 8000000
+
+unsigned char temporal;
+int numadc; //variable para el valor del adc
+int ADC; //valor del adc 
+int read1;
+int read2;
+
 //*****************************************************************************
 // Definici?n de funciones para que se puedan colocar despu?s del main de lo 
 // contrario hay que colocarlos todas las funciones antes del main
 //*****************************************************************************
 void setup(void);
+//*****************************************************************************
+// C?digo de Interrupci?n 
+//*****************************************************************************
+void __interrupt() isr(void){
+    
+//    // ---- INTERRUPCION DEL ADC --------
+    if (PIR1bits.ADIF == 1){ // Chequear bandera del conversor ADC
+        
+        ADC = read_ADC();
+        numadc = ADC; // pasar valor del adc a num1
+    }
+       PIR1bits.ADIF = 0; // Borrar el indicador del conversor ADC
 
+    //Interrupcion del SPI
+   if(SSPIF == 1){
+        temporal = spiRead();  //puede ser tambien PORTD = SSBUF;//recibo del master 
+        
+        if (temporal == 1){
+        spiWrite(numadc);  //ennvio al master el valor del adc
+        }
+        
+        SSPIF = 0;
+    }
+}
 //*****************************************************************************
 // C?digo Principal
 //*****************************************************************************
 void main(void) {
     setup();
-    Lcd_Init(); //Iniciar pantalla LCD
-    
-    
-    //confgurar posicion del cursor
-    Lcd_Set_Cursor(1,1);
-    Lcd_Write_String("POT1:  POT2:");
+    adc_init(0);//CONFIGURAR EL CANAL 0 DEL adc 
     //*************************************************************************
     // Loop infinito
     //*************************************************************************
     while(1){
         
-        //----------slave1
-       PORTCbits.RC2 = 0;       //Slave Select
-       __delay_ms(1);
-       
-       spiWrite(0); // envio al slave
-       pot1 = spiRead(); //leo lo que recibo sel slave
 
-       
-       __delay_ms(1);
-       PORTCbits.RC2 = 1;       //Slave Deselect 
-       
-       //--------------slave2
-       
-       PORTCbits.RC1 = 0;       //Slave Select
-       __delay_ms(1);
-       
-       spiWrite(1); // envio al slave
-       pot2 = spiRead(); //leo lo que recibo sel slave2
 
-  
-       __delay_ms(1);
-       PORTCbits.RC1 = 1;       //Slave Deselect 
-       
-       
-
-        __delay_ms(10);
-
-  // mostar en lcd el valor del pot1
-        
-        Lcd_Set_Cursor(2,1);
-        sprintf(buffer, "%3u", pot1);
-        Lcd_Write_String(buffer);
-    
-  //mostar el valor del pot2
-         Lcd_Set_Cursor(2,7);
-        sprintf(buffer, "%3u", pot2);
-        Lcd_Write_String(buffer);
-    
+        //verifica la conversion adc
+        if (ADCON0bits.GO == 0){
+            ADCON0bits.GO = 1;
+            __delay_ms(50);
+        }
+        //PORTD = numadc; //chequo del valor del ADC
     }
     return;
 }
@@ -110,13 +101,15 @@ void main(void) {
 // Funci?n de Inicializaci?n
 //*****************************************************************************
 void setup(void){
+    //ANSELbits.ANS0 = 1; //Canal AN0 como entrada analógica
+    //ANSELbits.ANS4 = 0; //Pin A5 como pin digital
+
     ANSEL = 0;
     ANSELH = 0;
     
-    TRISCbits.TRISC2 = 0;
-    TRISCbits.TRISC1 = 0;
-
-    //TRISA = 0;
+    ANSELbits.ANS0 = 1;
+    TRISAbits.TRISA0 = 1;
+    
     TRISB = 0;
     TRISD = 0;
     
@@ -124,16 +117,16 @@ void setup(void){
     PORTB = 0;
     PORTD = 0;
     
-    
-    PORTCbits.RC2 = 1;
-    PORTCbits.RC1 = 1;
-
-    
-    
-        
 // --------------- Oscilador --------------- 
-    OSCCONbits.IRCF = 0b111; // 4 MHz
+    OSCCONbits.IRCF = 0b111; // 8 MHz
     OSCCONbits.SCS = 1; // Seleccionar oscilador interno
-    spiInit(SPI_MASTER_OSC_DIV4, SPI_DATA_SAMPLE_MIDDLE, SPI_CLOCK_IDLE_LOW, SPI_IDLE_2_ACTIVE);
-
+    
+    INTCONbits.GIE = 1;         // Habilitamos interrupciones
+    INTCONbits.PEIE = 1;        // Habilitamos interrupciones PEIE
+    PIR1bits.SSPIF = 0;         // Borramos bandera interrupci?n MSSP
+    PIE1bits.SSPIE = 1;         // Habilitamos interrupci?n MSSP
+    TRISAbits.TRISA5 = 1;       // Slave Select
+   
+    spiInit(SPI_SLAVE_SS_EN, SPI_DATA_SAMPLE_MIDDLE, SPI_CLOCK_IDLE_LOW, SPI_IDLE_2_ACTIVE);
+   
 }

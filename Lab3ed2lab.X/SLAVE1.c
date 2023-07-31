@@ -1,5 +1,5 @@
 /*
- * File:   prelabed2slave.c
+ * File:   labed2slave.c
  * Author: lpgp3
  *
  * Created on 30 de julio de 2023, 04:50 PM

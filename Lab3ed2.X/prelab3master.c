@@ -76,9 +76,10 @@ void main(void) {
       // __delay_ms(250);
        //PORTA = pot1; //escribir el valor recibido en porb
     //mostrar valor del adc en el lcd 
-       
+        __delay_ms(10);
+
   // mostar en lcd el voltaje 1 
-        Lcd_Set_Cursor(2,2);
+        Lcd_Set_Cursor(2,1);
         sprintf(buffer, "%3u", pot1);
         Lcd_Write_String(buffer);
     
