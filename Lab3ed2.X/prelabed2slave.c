@@ -40,7 +40,7 @@
 //*****************************************************************************
 #define _XTAL_FREQ 8000000
 
-uint8_t temporal = 0;
+unsigned char temporal;
 int numadc; //variable para el valor del adc
 int ADC; //valor del adc 
 int read1;
@@ -57,18 +57,21 @@ void setup(void);
 void __interrupt() isr(void){
     
     // ---- INTERRUPCION DEL ADC --------
-    if (PIR1bits.ADIF){ // Chequear bandera del conversor ADC
+    if (PIR1bits.ADIF == 1){ // Chequear bandera del conversor ADC
         
         ADC = read_ADC();
         numadc = ADC; // pasar valor del adc a num1
-
-      PIR1bits.ADIF = 0; // Borrar el indicador del conversor ADC
-
     }
+       PIR1bits.ADIF = 0; // Borrar el indicador del conversor ADC
+
     //Interrupcion del SPI
    if(SSPIF == 1){
-        spiRead();  //puede ser tambien PORTD = SSBUF;//recibo del master 
+        temporal = spiRead();  //puede ser tambien PORTD = SSBUF;//recibo del master 
+        
+        if (temporal == 0){
         spiWrite(numadc);  //ennvio al master el valor del adc
+        }
+        
         SSPIF = 0;
     }
 }
@@ -95,14 +98,15 @@ void main(void) {
 // Funci?n de Inicializaci?n
 //*****************************************************************************
 void setup(void){
-    ANSELbits.ANS0 = 1;//conffurar el RA0 cmo analogico
+    ANSELbits.ANS0 = 1; //Canal AN0 como entrada analógica
+    ANSELbits.ANS4 = 0; //Pin A5 como pin digital
+
     ANSELH = 0;
     
-    TRISA = 0;
     TRISB = 0;
     TRISD = 0;
     
-    PORTA = 0;
+    //PORTA = 0;
     PORTB = 0;
     PORTD = 0;
     
@@ -115,6 +119,7 @@ void setup(void){
     PIR1bits.SSPIF = 0;         // Borramos bandera interrupci?n MSSP
     PIE1bits.SSPIE = 1;         // Habilitamos interrupci?n MSSP
     TRISAbits.TRISA5 = 1;       // Slave Select
+   
     spiInit(SPI_SLAVE_SS_EN, SPI_DATA_SAMPLE_MIDDLE, SPI_CLOCK_IDLE_LOW, SPI_IDLE_2_ACTIVE);
    
 }

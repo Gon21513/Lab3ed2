@@ -29,6 +29,7 @@
 //*****************************************************************************
 #include <xc.h>
 #include <stdint.h>
+#include <stdio.h>
 #include "SPI.h"
 
 
@@ -56,13 +57,15 @@ void main(void) {
        __delay_ms(1);
        
        spiWrite(0); // envio al slave
-       pot1 = spiRead(); //leo lo que recibo sel slave
+       //pot1 = spiRead(); //leo lo que recibo sel slave
+       //PORTA = pot1; //escribir el valor recibido en porb
+       PORTA = spiRead();
        
        __delay_ms(1);
        PORTCbits.RC2 = 1;       //Slave Deselect 
        
-       __delay_ms(250);
-       PORTB = pot1; //escribir el valor recibido en porb
+      // __delay_ms(250);
+       //PORTA = pot1; //escribir el valor recibido en porb
     }
     return;
 }
@@ -73,10 +76,13 @@ void setup(void){
     ANSEL = 0;
     ANSELH = 0;
     
-    TRISC2 = 0;
-    TRISB = 0;
+    TRISCbits.TRISC2 = 0;
+    TRISA = 0;
+    //TRISB = 0;
     TRISD = 0;
-    PORTB = 0;
+    
+    PORTA = 0;
+    //PORTB = 0;
     PORTD = 0;
     
     

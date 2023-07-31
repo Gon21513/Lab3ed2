@@ -12,8 +12,8 @@
 
 void adc_init(int channel){
     
-    PIE1bits.ADIE = 1; // Habiliar interrupcion del conversor ADC
-    PIR1bits.ADIF = 0; // Limpiar bandera de interrupci?n del ADC
+    //PIE1bits.ADIE = 1; // Habiliar interrupcion del conversor ADC
+    //PIR1bits.ADIF = 0; // Limpiar bandera de interrupci?n del ADC
     
     ADCON0bits.ADCS1 = 0; // Fosc/2        
     ADCON0bits.ADCS0 = 0; // =======      
