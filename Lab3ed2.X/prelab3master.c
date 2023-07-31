@@ -31,9 +31,12 @@
 #include <stdint.h>
 #include <stdio.h>
 #include "SPI.h"
+#include "LCD.h"
 
 
 char pot1;
+char buffer[4]; // Variable para almacenar la cadena de caracteres del valor del ADC
+
 //*****************************************************************************
 // Definici?n de variables
 //*****************************************************************************
@@ -49,6 +52,12 @@ void setup(void);
 //*****************************************************************************
 void main(void) {
     setup();
+    Lcd_Init(); //Iniciar pantalla LCD
+    
+    
+    //confgurar posicion del cursor
+    Lcd_Set_Cursor(1,1);
+    Lcd_Write_String("ADC:");
     //*************************************************************************
     // Loop infinito
     //*************************************************************************
@@ -57,15 +66,22 @@ void main(void) {
        __delay_ms(1);
        
        spiWrite(0); // envio al slave
-       //pot1 = spiRead(); //leo lo que recibo sel slave
+       pot1 = spiRead(); //leo lo que recibo sel slave
        //PORTA = pot1; //escribir el valor recibido en porb
-       PORTA = spiRead();
+      // PORTA = spiRead();
        
        __delay_ms(1);
        PORTCbits.RC2 = 1;       //Slave Deselect 
        
       // __delay_ms(250);
        //PORTA = pot1; //escribir el valor recibido en porb
+    //mostrar valor del adc en el lcd 
+       
+  // mostar en lcd el voltaje 1 
+        Lcd_Set_Cursor(2,2);
+        sprintf(buffer, "%3u", pot1);
+        Lcd_Write_String(buffer);
+    
     }
     return;
 }
@@ -77,12 +93,12 @@ void setup(void){
     ANSELH = 0;
     
     TRISCbits.TRISC2 = 0;
-    TRISA = 0;
-    //TRISB = 0;
+    //TRISA = 0;
+    TRISB = 0;
     TRISD = 0;
     
-    PORTA = 0;
-    //PORTB = 0;
+    //PORTA = 0;
+    PORTB = 0;
     PORTD = 0;
     
     
@@ -91,7 +107,7 @@ void setup(void){
     
         
 // --------------- Oscilador --------------- 
-    OSCCONbits.IRCF = 0b111; // 8 MHz
+    OSCCONbits.IRCF = 0b111; // 4 MHz
     OSCCONbits.SCS = 1; // Seleccionar oscilador interno
     spiInit(SPI_MASTER_OSC_DIV4, SPI_DATA_SAMPLE_MIDDLE, SPI_CLOCK_IDLE_LOW, SPI_IDLE_2_ACTIVE);
 

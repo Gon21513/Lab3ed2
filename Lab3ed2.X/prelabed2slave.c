@@ -56,7 +56,7 @@ void setup(void);
 //*****************************************************************************
 void __interrupt() isr(void){
     
-    // ---- INTERRUPCION DEL ADC --------
+//    // ---- INTERRUPCION DEL ADC --------
     if (PIR1bits.ADIF == 1){ // Chequear bandera del conversor ADC
         
         ADC = read_ADC();
@@ -85,12 +85,15 @@ void main(void) {
     // Loop infinito
     //*************************************************************************
     while(1){
+        
+
+
         //verifica la conversion adc
         if (ADCON0bits.GO == 0){
             ADCON0bits.GO = 1;
             __delay_ms(50);
         }
-        PORTD = numadc; //chequo del valor del ADC
+        //PORTD = numadc; //chequo del valor del ADC
     }
     return;
 }
@@ -98,10 +101,14 @@ void main(void) {
 // Funci?n de Inicializaci?n
 //*****************************************************************************
 void setup(void){
-    ANSELbits.ANS0 = 1; //Canal AN0 como entrada analógica
-    ANSELbits.ANS4 = 0; //Pin A5 como pin digital
+    //ANSELbits.ANS0 = 1; //Canal AN0 como entrada analógica
+    //ANSELbits.ANS4 = 0; //Pin A5 como pin digital
 
+    ANSEL = 0;
     ANSELH = 0;
+    
+    ANSELbits.ANS0 = 1;
+    TRISAbits.TRISA0 = 1;
     
     TRISB = 0;
     TRISD = 0;

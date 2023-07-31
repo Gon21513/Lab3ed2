@@ -6,7 +6,7 @@
 
 
 // --------------- Frecuencia ---------------
-#define _XTAL_FREQ 8000000
+#define _XTAL_FREQ 400000
 
 // --------------- Setup del ADC --------------- 
 
