@@ -2,7 +2,7 @@
  * File:   prelab3.c
  * Author: Luis Pedro Gonzalez 21513
  *
- * Created on 29 de julio de 2023, 04:09 PM
+ * Created on 30 de julio de 2023, 04:09 PM
  */
 
 // CONFIG1
@@ -35,7 +35,24 @@
 
 
 char pot1;
-char buffer[4]; // Variable para almacenar la cadena de caracteres del valor del ADC
+char pot2;
+char contador;
+
+char buffer[20]; // Variable para almacenar la cadena de caracteres del valor del ADC
+char voltaje1[10];//buffer para guardar los valore de la lcd del pot1
+char voltaje2[10];//buffer para guardar los valore de la lcd del pot2
+char conta[20];//buffer para guardar los valore de la lcd del contador 
+
+
+int volt1;
+int volt2;
+
+unsigned int unidad1; //pot1
+unsigned int decima1; //pot1
+unsigned int centesima1; //pot1
+unsigned int unidad2; //pot2
+unsigned int decima2; //pot2
+unsigned int centesima2; //pot2
 
 //*****************************************************************************
 // Definici?n de variables
@@ -47,6 +64,11 @@ char buffer[4]; // Variable para almacenar la cadena de caracteres del valor del
 //*****************************************************************************
 void setup(void);
 
+//funcion para le mapeo adc a voltahje 
+
+int map(unsigned char value, int inputmin, int inputmax, int outmin, int outmax){ //función para mapear valores
+    return ((value - inputmin)*(outmax-outmin)) / (inputmax-inputmin)+outmin;}
+
 //*****************************************************************************
 // C?digo Principal
 //*****************************************************************************
@@ -57,31 +79,92 @@ void main(void) {
     
     //confgurar posicion del cursor
     Lcd_Set_Cursor(1,1);
-    Lcd_Write_String("ADC:");
+    Lcd_Write_String("POT1: POT2: CONT:");
     //*************************************************************************
     // Loop infinito
     //*************************************************************************
     while(1){
+        
+        //----------slave1
        PORTCbits.RC2 = 0;       //Slave Select
        __delay_ms(1);
        
-       spiWrite(0); // envio al slave
+       spiWrite(1); // envio al slave
        pot1 = spiRead(); //leo lo que recibo sel slave
-       //PORTA = pot1; //escribir el valor recibido en porb
-      // PORTA = spiRead();
+       __delay_ms(1);
+      
+//       __delay_ms(1);
+       PORTCbits.RC2 = 1;       //Slave Deselect 
+      // __delay_ms(1);
+//       //vuelvo a activar el slave 1 pero con el contador
+
+//slave 1 otra vez
+       //       
+        PORTCbits.RC2 = 0;       //Slave Select
+       __delay_ms(1);
+       
+       spiWrite(3); // envio al slave1 el id del contador 
+       contador = spiRead(); //leo lo que recibo sel slave
+
        
        __delay_ms(1);
        PORTCbits.RC2 = 1;       //Slave Deselect 
        
-      // __delay_ms(250);
-       //PORTA = pot1; //escribir el valor recibido en porb
-    //mostrar valor del adc en el lcd 
-        __delay_ms(10);
+       
+       //--------------slave2
+       
+       PORTCbits.RC1 = 0;       //Slave Select
+       __delay_ms(1);
+       
+       spiWrite(2); // envio al slave
+       pot2 = spiRead(); //leo lo que recibo sel slave2
 
-  // mostar en lcd el voltaje 1 
-        Lcd_Set_Cursor(2,1);
-        sprintf(buffer, "%3u", pot1);
-        Lcd_Write_String(buffer);
+  
+       __delay_ms(1);
+       PORTCbits.RC1 = 1;       //Slave Deselect 
+       
+ 
+       
+
+        __delay_ms(10);
+        
+        
+        //mostrar en lcd el valor del primer pot
+        volt1 = map(pot1, 0, 255, 0, 100); //mapear valor del voltaje de 0 a 100
+        unidad1 = (volt1*5)/100; //Separar las unidades del valor del voltaje
+        decima1 = ((volt1*5)/10)%10; //Separar las decimas del valor del voltaje
+        centesima1 = (volt1*5)%10; //Separar las centesimas del valor del voltaje
+        Lcd_Set_Cursor(2,1); //Cursor en (1,7)
+        sprintf(buffer, "%u.%u%u" , unidad1 , decima1 , centesima1 ); //convertir variable a una cadena de caracteres
+        Lcd_Write_String(buffer); //Mostrar cadena de caracteres en pantalla
+        
+        
+        //mostrar en el lcd el valor del segundo pot
+        volt2 = map(pot2, 0, 255, 0, 100); //mapear valor del voltaje de 0 a 100
+        unidad2 = (volt2*5)/100; //Separar las unidades del valor del voltaje
+        decima2 = ((volt2*5)/10)%10; //Separar las decimas del valor del voltaje
+        centesima2 = (volt2*5)%10; //Separar las centesimas del valor del voltaje
+        Lcd_Set_Cursor(2,7); //Cursor en (1,7)
+        sprintf(buffer, "%u.%u%u" , unidad2 , decima2 , centesima2 ); //convertir variable a una cadena de caracteres
+        Lcd_Write_String(buffer); //Mostrar cadena de caracteres en pantalla
+        
+        
+        Lcd_Set_Cursor(2,14); //Cursor en (1,7)
+        sprintf(conta, "%03u" , contador); //convertir variable a una cadena de caracteres
+        Lcd_Write_String(conta); //Mostrar cadena de caracteres en pantalla
+       // __delay_ms(150);
+  
+
+//  // mostar en lcd el valor del pot1
+//        
+//        Lcd_Set_Cursor(2,1);
+//        sprintf(buffer, "%3u", pot1);
+//        Lcd_Write_String(buffer);
+//    
+//  //mostar el valor del pot2
+//         Lcd_Set_Cursor(2,7);
+//        sprintf(buffer, "%3u", pot2);
+//        Lcd_Write_String(buffer);
     
     }
     return;
@@ -93,7 +176,11 @@ void setup(void){
     ANSEL = 0;
     ANSELH = 0;
     
+    
+    //salidas de los esclavos
     TRISCbits.TRISC2 = 0;
+    TRISCbits.TRISC1 = 0;
+
     //TRISA = 0;
     TRISB = 0;
     TRISD = 0;
@@ -103,12 +190,15 @@ void setup(void){
     PORTD = 0;
     
     
+    //apagar pueros de esclavos(ESTA INVERTIDA ))
     PORTCbits.RC2 = 1;
+    PORTCbits.RC1 = 1;
+
     
     
         
 // --------------- Oscilador --------------- 
-    OSCCONbits.IRCF = 0b111; // 4 MHz
+    OSCCONbits.IRCF = 0b111; // 8 MHz
     OSCCONbits.SCS = 1; // Seleccionar oscilador interno
     spiInit(SPI_MASTER_OSC_DIV4, SPI_DATA_SAMPLE_MIDDLE, SPI_CLOCK_IDLE_LOW, SPI_IDLE_2_ACTIVE);
 

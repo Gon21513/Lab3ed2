@@ -1,8 +1,8 @@
 /*
  * File:   prelabed2slave.c
- * Author: Luis Pedro Gonzalez
+ * Author: Luis Pedro Gonzalez 21513
  *
- * Created on 29 de julio de 2023, 04:50 PM
+ * Created on 30 de julio de 2023, 04:50 PM
  */
 
 // CONFIG1
@@ -68,7 +68,7 @@ void __interrupt() isr(void){
    if(SSPIF == 1){
         temporal = spiRead();  //puede ser tambien PORTD = SSBUF;//recibo del master 
         
-        if (temporal == 0){
+        if (temporal == 2){
         spiWrite(numadc);  //ennvio al master el valor del adc
         }
         

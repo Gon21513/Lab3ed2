@@ -1,8 +1,8 @@
 /*
- * File:   prelabed2slave.c
- * Author: Luis Pedro Gonzalez
+ * File:   labed2slave.c
+ * Author: Luis Pedro Gonzalez 21513
  *
- * Created on 29 de julio de 2023, 04:50 PM
+ * Created on 30 de julio de 2023, 04:50 PM
  */
 
 // CONFIG1
@@ -31,6 +31,7 @@
 #include <stdint.h>
 #include "SPI.h"
 #include "ADC.h"
+#include "BOTON.h"
 #include <stdio.h>
 #include <pic16f887.h>
 #include<pic.h>
@@ -45,12 +46,17 @@ int numadc; //variable para el valor del adc
 int ADC; //valor del adc 
 int read1;
 int read2;
+char counter = 0; //contador y se incia en 0
+int antirrebote1;// bandera para los antirrebotes 
+int antirrebote2;//bandera para el segundo antirrebote
+
 
 //*****************************************************************************
 // Definici?n de funciones para que se puedan colocar despu?s del main de lo 
 // contrario hay que colocarlos todas las funciones antes del main
 //*****************************************************************************
 void setup(void);
+void contador(void); //funcion del contador
 //*****************************************************************************
 // C?digo de Interrupci?n 
 //*****************************************************************************
@@ -68,12 +74,23 @@ void __interrupt() isr(void){
    if(SSPIF == 1){
         temporal = spiRead();  //puede ser tambien PORTD = SSBUF;//recibo del master 
         
-        if (temporal == 0){
-        spiWrite(numadc);  //ennvio al master el valor del adc
+        if (temporal == 1){//id del pot1
+        spiWrite(counter);  //ennvio al master el valor del adc
         }
         
+        else if (temporal == 3){//id del contador
+         spiWrite(numadc);//envio al master del contador
+        }
+        
+            
         SSPIF = 0;
     }
+       
+       //interrupcion del portb
+       if (INTCONbits.RBIF == 1){//revisar interrupcion del puerto b
+            contador();// llamar a funcion del contador
+            INTCONbits.RBIF = 0;  
+        }
 }
 //*****************************************************************************
 // C?digo Principal
@@ -81,6 +98,10 @@ void __interrupt() isr(void){
 void main(void) {
     setup();
     adc_init(0);//CONFIGURAR EL CANAL 0 DEL adc 
+    
+    //configurar los puertos B para los botones 
+    ioc_init(7); //se configura el puerto RB7
+    ioc_init(6); //se configura el puerto RB6
     //*************************************************************************
     // Loop infinito
     //*************************************************************************
@@ -110,7 +131,12 @@ void setup(void){
     ANSELbits.ANS0 = 1;
     TRISAbits.TRISA0 = 1;
     
-    TRISB = 0;
+    
+    ///TRISB = 0;
+    TRISBbits.TRISB6 = 1;
+    TRISBbits.TRISB7 = 1;
+
+
     TRISD = 0;
     
     //PORTA = 0;
@@ -129,4 +155,32 @@ void setup(void){
    
     spiInit(SPI_SLAVE_SS_EN, SPI_DATA_SAMPLE_MIDDLE, SPI_CLOCK_IDLE_LOW, SPI_IDLE_2_ACTIVE);
    
+}
+
+//funcion del contador
+void contador(void){
+    
+    //incremto del contador
+    if (PORTBbits.RB6 == 0){//si no esta presionado 
+        antirrebote1 = 1; //activar antirrbote
+    }
+    
+     if (PORTBbits.RB6 == 1 && antirrebote1 == 1){//si s epresiona rb6
+         //__delay_ms(10);
+         counter++; //incremetar el contador
+         antirrebote1 = 0;// apagar antirrebote
+    }   
+    
+   //decremeto del contador
+    if (PORTBbits.RB7 == 0){//si no esta presionado 
+        antirrebote2 = 1; //activar antirrbote
+    }
+    
+     if (PORTBbits.RB7 == 1 && antirrebote2 == 1){//si s epresiona rb6
+         //__delay_ms(10);
+         counter--; //incremetar el contador
+         antirrebote2 = 0;// apagar antirrebote
+
+    }   
+    
 }

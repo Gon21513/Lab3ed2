@@ -1,10 +1,4 @@
-/* 
- * File: LCD.h  
- * Se utiliz? y se adaptaron las librer?as de Ligo George 
- * de la p?gina www.electrosome.com
- * Enlace: https://electrosome.com/lcd-pic-mplab-xc8/
- * Revision history: 
- */
+//Luis Pedro Gonzalez 21513
 
 // This is a guard condition so that contents of this file are not included
 // more than once.  

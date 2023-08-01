@@ -38,6 +38,18 @@ char pot1;
 char pot2;
 
 char buffer[4]; // Variable para almacenar la cadena de caracteres del valor del ADC
+char voltaje1[10];//buffer para guardar los valore de la lcd del pot1
+char voltaje2[10];//buffer para guardar los valore de la lcd del pot2
+
+int volt1;
+int volt2;
+
+unsigned int unidad1; //pot1
+unsigned int decima1; //pot1
+unsigned int centesima1; //pot1
+unsigned int unidad2; //pot2
+unsigned int decima2; //pot2
+unsigned int centesima2; //pot2
 
 //*****************************************************************************
 // Definici?n de variables
@@ -48,6 +60,11 @@ char buffer[4]; // Variable para almacenar la cadena de caracteres del valor del
 // contrario hay que colocarlos todas las funciones antes del main
 //*****************************************************************************
 void setup(void);
+
+//funcion para le mapeo adc a voltahje 
+
+int map(unsigned char value, int inputmin, int inputmax, int outmin, int outmax){ //función para mapear valores
+    return ((value - inputmin)*(outmax-outmin)) / (inputmax-inputmin)+outmin;}
 
 //*****************************************************************************
 // C?digo Principal
@@ -81,27 +98,44 @@ void main(void) {
        PORTCbits.RC1 = 0;       //Slave Select
        __delay_ms(1);
        
-       spiWrite(1); // envio al slave
+       spiWrite(1); // envio al slaved
        pot2 = spiRead(); //leo lo que recibo sel slave2
 
-  
+       
        __delay_ms(1);
        PORTCbits.RC1 = 1;       //Slave Deselect 
        
        
 
         __delay_ms(10);
-
-  // mostar en lcd el valor del pot1
         
-        Lcd_Set_Cursor(2,1);
-        sprintf(buffer, "%3u", pot1);
-        Lcd_Write_String(buffer);
-    
-  //mostar el valor del pot2
-         Lcd_Set_Cursor(2,7);
-        sprintf(buffer, "%3u", pot2);
-        Lcd_Write_String(buffer);
+        
+        volt1 = map(pot1, 0, 255, 0, 100); //mapear valor del voltaje de 0 a 100
+        unidad1 = (volt1*5)/100; //Separar las unidades del valor del voltaje
+        decima1 = ((volt1*5)/10)%10; //Separar las decimas del valor del voltaje
+        centesima1 = (volt1*5)%10; //Separar las centesimas del valor del voltaje
+        Lcd_Set_Cursor(2,1); //Cursor en (1,7)
+        sprintf(voltaje1, "%u.%u%u" , unidad1 , decima1 , centesima1 ); //convertir variable a una cadena de caracteres
+        Lcd_Write_String(voltaje1); //Mostrar cadena de caracteres en pantalla
+        
+        volt2 = map(pot2, 0, 255, 0, 100); //mapear valor del voltaje de 0 a 100
+        unidad2 = (volt2*5)/100; //Separar las unidades del valor del voltaje
+        decima2 = ((volt2*5)/10)%10; //Separar las decimas del valor del voltaje
+        centesima2 = (volt2*5)%10; //Separar las centesimas del valor del voltaje
+        Lcd_Set_Cursor(2,7); //Cursor en (1,7)
+        sprintf(voltaje2, "%u.%u%u" , unidad2 , decima2 , centesima2 ); //convertir variable a una cadena de caracteres
+        Lcd_Write_String(voltaje2); //Mostrar cadena de caracteres en pantalla
+
+//  // mostar en lcd el valor del pot1
+//        
+//        Lcd_Set_Cursor(2,1);
+//        sprintf(buffer, "%3u", pot1);
+//        Lcd_Write_String(buffer);
+//    
+//  //mostar el valor del pot2
+//         Lcd_Set_Cursor(2,7);
+//        sprintf(buffer, "%3u", pot2);
+//        Lcd_Write_String(buffer);
     
     }
     return;
@@ -132,7 +166,7 @@ void setup(void){
     
         
 // --------------- Oscilador --------------- 
-    OSCCONbits.IRCF = 0b111; // 4 MHz
+    OSCCONbits.IRCF = 0b111; // 8 MHz
     OSCCONbits.SCS = 1; // Seleccionar oscilador interno
     spiInit(SPI_MASTER_OSC_DIV4, SPI_DATA_SAMPLE_MIDDLE, SPI_CLOCK_IDLE_LOW, SPI_IDLE_2_ACTIVE);
 

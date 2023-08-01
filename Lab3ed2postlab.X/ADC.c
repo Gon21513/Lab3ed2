@@ -1,4 +1,4 @@
-
+//Luis Pedro Gonzalez 21513
 //ADC setup 
 #include <xc.h>
 #include "ADC.h"

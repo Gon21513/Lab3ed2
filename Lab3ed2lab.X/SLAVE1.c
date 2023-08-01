@@ -1,6 +1,6 @@
 /*
  * File:   labed2slave.c
- * Author: lpgp3
+ * Author: Luis Pedro Gonzalez 21513
  *
  * Created on 30 de julio de 2023, 04:50 PM
  */
